@@ -60,7 +60,7 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
         return SourceSearchResult(tracks = tracks, collections = collections, entities = entities, nextCursor = next)
     }
 
-    private fun parseTracks(items: JSONArray?): List<SourceTrackDetails> {
+    internal fun parseTracks(items: JSONArray?): List<SourceTrackDetails> {
         if (items == null) return emptyList()
         return (0 until items.length()).mapNotNull { index ->
             val item = items.optJSONObject(index) ?: return@mapNotNull null
@@ -94,7 +94,7 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
         }
     }
 
-    private fun parseCollections(items: JSONArray?, kind: String): List<SourceCollection> {
+    internal fun parseCollections(items: JSONArray?, kind: String): List<SourceCollection> {
         if (items == null) return emptyList()
         return (0 until items.length()).mapNotNull { index ->
             val item = items.optJSONObject(index) ?: return@mapNotNull null
