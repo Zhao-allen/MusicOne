@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - feature/spotify-source
 
 permissions:
   contents: read
@@ -66,6 +67,8 @@ jobs:
             :app:testDebugUnitTest \
             :app:lintDebug \
             :app:assembleDebug \
+            :source-packs:spotify:assembleDebug \
+            :source-packs:spotify:packageDebugSource \
             --continue \
             --stacktrace \
             --no-daemon \
