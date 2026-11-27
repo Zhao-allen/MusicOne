@@ -71,7 +71,7 @@ internal class SpotifyAuthentication(
         val state = pending[challenge.id] ?: return@withContext SourceAuthResult(
             SourceAuthProgress.EXPIRED, "登录流程已过期，请重新开始"
         )
-        val callback = input["callbackUrl"].orEmpty()
+        val callback = input["callbackUrl"] ?: store.takeCallback().orEmpty()
         val code = input["code"] ?: Uri.parse(callback).getQueryParameter("code")
         val returnedState = input["state"] ?: Uri.parse(callback).getQueryParameter("state")
         val error = Uri.parse(callback).getQueryParameter("error")
