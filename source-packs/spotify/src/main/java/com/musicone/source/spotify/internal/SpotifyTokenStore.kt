@@ -66,20 +66,59 @@ internal class SpotifyTokenStore(context: Context) {
         }
     }
 
-    fun saveCallback(uri: String) { preferences.edit().putString("oauth_callback", uri).apply() }
+    @Synchronized fun saveCallback(uri: String) {
+        preferences.edit().putString("oauth_callback_enc", encryptString(uri)).apply()
+    }
 
     @Synchronized fun takeCallback(): String? {
-        val value = preferences.getString("oauth_callback", null)
-        preferences.edit().remove("oauth_callback").apply()
-        return value
+        val value = preferences.getString("oauth_callback_enc", null)
+        preferences.edit().remove("oauth_callback_enc").apply()
+        return value?.let(::decryptString)
+    }
+
+    @Synchronized fun savePending(challengeId: String, verifier: String, state: String) {
+        val json = JSONObject().put("id", challengeId).put("verifier", verifier).put("state", state).toString()
+        preferences.edit().putString("oauth_pending_enc", encryptString(json)).apply()
+    }
+
+    @Synchronized fun readPending(challengeId: String): Pair<String, String>? {
+        val packed = preferences.getString("oauth_pending_enc", null) ?: return null
+        val json = runCatching { JSONObject(decryptString(packed)) }.getOrNull() ?: return null
+        if (json.optString("id") != challengeId) return null
+        val verifier = json.optString("verifier")
+        val state = json.optString("state")
+        return if (verifier.isNotBlank() && state.isNotBlank()) verifier to state else null
+    }
+
+    @Synchronized fun clearPending() {
+        preferences.edit().remove("oauth_pending_enc").apply()
     }
 
     @Synchronized fun clear() {
-        preferences.edit().remove("tokens").commit()
+        preferences.edit().remove("tokens").remove("oauth_callback_enc").remove("oauth_pending_enc").commit()
         runCatching {
             val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
             store.deleteEntry(alias)
         }
+    }
+
+    private fun encryptString(value: String): String {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key())
+        val iv = cipher.iv
+        val encrypted = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(byteArrayOf(iv.size.toByte()) + iv + encrypted, Base64.NO_WRAP)
+    }
+
+    private fun decryptString(value: String): String {
+        val bytes = Base64.decode(value, Base64.NO_WRAP)
+        val ivSize = bytes[0].toInt()
+        require(ivSize in 12..16)
+        val iv = bytes.copyOfRange(1, 1 + ivSize)
+        val encrypted = bytes.copyOfRange(1 + ivSize, bytes.size)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
+        return String(cipher.doFinal(encrypted), Charsets.UTF_8)
     }
 
     private fun key(): SecretKey {
