@@ -7,13 +7,11 @@ on:
       - feature/spotify-source
     paths:
       - 'app/**'
-      - 'source-packs/**'
       - 'source-sdk/**'
       - 'source-runtime/**'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle/**'
-      - '.github/workflows/build-spotify-test-apk.yml'
 
 permissions:
   contents: read
