@@ -15,7 +15,8 @@
     "ACCOUNT",
     "SEARCH",
     "PLAYLIST",
-    "ALBUM"
+    "ALBUM",
+    "ARTIST"
   ],
   "useCustomPages": false,
   "requiresLogin": true
