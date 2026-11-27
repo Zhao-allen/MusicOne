@@ -191,9 +191,13 @@ internal fun RecommendationDestination(
                         if (playlist.source.id == "com.musicone.source.spotify") {
                             spotifyPlaybackScope.launch {
                                 try {
-                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(sorted.tracks)
-                                    if (matched.isNotEmpty()) viewModel.playPlaylist(sorted.copy(tracks = matched), shuffle = false)
-                                    else android.widget.Toast.makeText(context, "当前已加载的 Spotify 歌曲没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
+                                    val complete = catalog.playlists.complete(playlist)
+                                    val completeSorted = complete.copy(tracks = sortedPlaylistTracks(complete.tracks, sort.value))
+                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(completeSorted.tracks)
+                                    if (matched.isNotEmpty()) {
+                                        viewModel.playPlaylist(completeSorted.copy(tracks = matched), shuffle = false)
+                                        android.widget.Toast.makeText(context, "已匹配 ${matched.size}/${completeSorted.tracks.size} 首歌曲", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else android.widget.Toast.makeText(context, "Spotify 歌单没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
                                 } catch (cancelled: CancellationException) { throw cancelled }
                                 catch (_: Exception) {
                                     android.widget.Toast.makeText(context, "Spotify 歌单匹配失败，请检查已安装音源", android.widget.Toast.LENGTH_LONG).show()
@@ -205,9 +209,13 @@ internal fun RecommendationDestination(
                         if (playlist.source.id == "com.musicone.source.spotify") {
                             spotifyPlaybackScope.launch {
                                 try {
-                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(sorted.tracks)
-                                    if (matched.isNotEmpty()) viewModel.playPlaylist(sorted.copy(tracks = matched), shuffle = true)
-                                    else android.widget.Toast.makeText(context, "当前已加载的 Spotify 歌曲没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
+                                    val complete = catalog.playlists.complete(playlist)
+                                    val completeSorted = complete.copy(tracks = sortedPlaylistTracks(complete.tracks, sort.value))
+                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(completeSorted.tracks)
+                                    if (matched.isNotEmpty()) {
+                                        viewModel.playPlaylist(completeSorted.copy(tracks = matched), shuffle = true)
+                                        android.widget.Toast.makeText(context, "已匹配 ${matched.size}/${completeSorted.tracks.size} 首歌曲", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else android.widget.Toast.makeText(context, "Spotify 歌单没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
                                 } catch (cancelled: CancellationException) { throw cancelled }
                                 catch (_: Exception) {
                                     android.widget.Toast.makeText(context, "Spotify 歌单匹配失败，请检查已安装音源", android.widget.Toast.LENGTH_LONG).show()
