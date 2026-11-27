@@ -24,7 +24,6 @@ class SpotifyOAuthRedirectActivity : Activity() {
         if (uri?.scheme == SCHEME && uri.host == HOST) {
             runCatching {
                 val directory = File(filesDir, "source-packs/data/$SOURCE_ID").apply { mkdirs() }
-                val output = File(directory, CALLBACK_FILE)
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
                 cipher.init(Cipher.ENCRYPT_MODE, key())
                 val encrypted = cipher.doFinal(uri.toString().toByteArray(Charsets.UTF_8))
