@@ -1,0 +1,17 @@
+{
+  "id": "com.musicone.source.spotify",
+  "name": "Spotify",
+  "kind": "MAIN",
+  "versionCode": 1,
+  "versionName": "0.1.0",
+  "entryClass": "com.musicone.source.spotify.SpotifySourceEntry",
+  "apiVersion": 1,
+  "minHostVersionCode": 6,
+  "minHostVersionName": "0.3.0",
+  "minAndroid": 23,
+  "kotlinVersion": "2.3.21",
+  "composeVersion": "1.11.4",
+  "capabilities": [],
+  "useCustomPages": false,
+  "requiresLogin": false
+}
