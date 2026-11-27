@@ -87,7 +87,7 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
                 artwork = SourceArtwork(url = track.artworkUrl),
                 artists = artists,
                 albumRef = albumRef,
-                access = TrackAccessInfo(playable = false, reason = "Spotify Web API 不提供可供 MusicOne 直接播放的音频流")
+                access = SpotifyPlaybackPolicy.metadataOnlyAccess()
             )
         }
     }
