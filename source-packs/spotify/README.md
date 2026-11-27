@@ -13,7 +13,7 @@
 - 接入 Spotify 用户资料库：我创建的歌单、我关注/保存的歌单、Liked Songs 收藏歌曲入口。
 - 接入收藏歌曲读取、单曲收藏状态查询，以及收藏/取消收藏（使用新版 `/me/library` 接口，并申请 `user-library-modify` scope）。
 - 接入歌单详情和曲目分页；支持专辑详情、专辑曲目分页、艺人资料和艺人专辑列表。
-- 当前声明 `ACCOUNT`、`SEARCH`、`PLAYLIST`、`ALBUM`；播放和歌词能力仍未声明。
+- 当前声明 `ACCOUNT`、`SEARCH`、`PLAYLIST`、`ALBUM`、`ARTIST`；播放和歌词能力仍未声明。
 
 ## 本机配置
 
