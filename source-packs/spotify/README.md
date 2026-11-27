@@ -10,8 +10,9 @@
 - 独立 OAuth 回调 URI：`com.musicone.spotify://callback`；由 MusicOne 宿主 Manifest 接收，再写入 Spotify 音源私有目录，适配 DexClassLoader 音源包运行方式。
 - 登录后读取 Spotify 当前用户资料。
 - 接入 Spotify 搜索：歌曲、专辑、歌手、歌单；分页使用 API 返回的 next URL，并遵守 Development Mode 搜索每类最多 10 条的限制。
-- 接入 Spotify 用户资料库：我创建的歌单、我关注/保存的歌单、Liked Songs 收藏歌曲入口。
-- 接入收藏歌曲读取、单曲收藏状态查询，以及收藏/取消收藏（使用新版 `/me/library` 接口，并申请 `user-library-modify` scope）。
+- 接入 Spotify 用户资料库：我创建的歌单、我关注/保存的歌单、已收藏专辑和 Liked Songs 收藏歌曲入口。
+- 接入收藏歌曲读取、单曲收藏状态查询，以及歌曲收藏/取消收藏。
+- 接入已收藏专辑分页读取；支持专辑收藏/取消收藏、歌单关注/取消关注（使用新版 `/me/library` 接口，并申请 `user-library-modify`、`user-follow-modify` scope）。
 - 接入歌单详情和曲目分页；支持专辑详情、专辑曲目分页、艺人资料和艺人专辑列表。
 - 当前声明 `ACCOUNT`、`SEARCH`、`PLAYLIST`、`ALBUM`、`ARTIST`；播放和歌词能力仍未声明。
 
