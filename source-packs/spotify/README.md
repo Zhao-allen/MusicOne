@@ -6,12 +6,12 @@
 
 - 独立音源模块注册到 Gradle 和宿主音源包构建流程。
 - Spotify OAuth PKCE：随机 verifier、S256 challenge、state 校验、授权码兑换、刷新令牌。
-- 使用 Android Keystore AES-GCM 加密保存令牌，不在日志中输出令牌。
+- 使用 Android Keystore AES-GCM 加密保存访问令牌、刷新令牌、OAuth 回调地址和 PKCE verifier/state，不在日志中输出凭据。
 - 独立 OAuth 回调 URI：`com.musicone.spotify://callback`。
 - 登录后读取 Spotify 当前用户资料。
 - 接入 Spotify 搜索：歌曲、专辑、歌手、歌单；分页使用 API 返回的 next URL，并遵守 Development Mode 搜索每类最多 10 条的限制。
 - 接入 Spotify 用户资料库：我创建的歌单、我关注/保存的歌单、Liked Songs 收藏歌曲入口。
-- 接入收藏歌曲读取、单曲收藏状态查询，以及收藏/取消收藏（使用新版 `/me/library` 接口）。
+- 接入收藏歌曲读取、单曲收藏状态查询，以及收藏/取消收藏（使用新版 `/me/library` 接口，并申请 `user-library-modify` scope）。
 - 接入歌单详情和曲目分页；支持专辑详情与专辑曲目分页。
 - 当前声明 `ACCOUNT`、`SEARCH`、`PLAYLIST`、`ALBUM`；播放和歌词能力仍未声明。
 
