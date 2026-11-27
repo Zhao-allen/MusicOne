@@ -74,7 +74,7 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
             }
             val album = item.optJSONObject("album")
             val albumId = album?.optString("id").orEmpty()
-            val albumRef = if (albumId.isNotBlank()) SourceEntityRef(albumId, album.optString("name"), "album") else null
+            val albumRef = album?.takeIf { albumId.isNotBlank() }?.let { SourceEntityRef(albumId, it.optString("name"), "album") }
             val track = SourceTrack(
                 identity = TrackIdentity(SPOTIFY_SOURCE_ID, null, id),
                 title = item.optString("name"),
