@@ -23,6 +23,7 @@ class SpotifySourceEntry : SourceEntry {
 
     override val implementedCapabilities: Set<SourceCapability> = descriptor.capabilities
     private lateinit var auth: SpotifyAuthentication
+    private lateinit var loginPage: SpotifyAuthenticationPage
     private lateinit var searchService: SpotifySearch
     private lateinit var libraryService: SpotifyLibrary
     private lateinit var entitiesService: SpotifyEntities
@@ -30,6 +31,9 @@ class SpotifySourceEntry : SourceEntry {
 
     override val authentication: SourceAuthentication
         get() = auth
+
+    override val authenticationPage: SourceAuthenticationPage
+        get() = loginPage
 
     override val search: SourceSearch
         get() = searchService
@@ -48,6 +52,7 @@ class SpotifySourceEntry : SourceEntry {
             store = SpotifyTokenStore(environment.context),
             onLoginCompleted = environment.host::exitSource
         )
+        loginPage = SpotifyAuthenticationPage(auth)
         searchService = SpotifySearch(auth)
         libraryService = SpotifyLibrary(auth, searchService)
         entitiesService = SpotifyEntities(auth, libraryService, searchService)
