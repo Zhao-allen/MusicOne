@@ -155,10 +155,17 @@ internal class SpotifyAuthentication(
         return withContext(Dispatchers.IO) { getJson(endpoint, token) }
     }
 
+    internal suspend fun authorizedGetArray(endpoint: String): org.json.JSONArray {
+        val state = refreshAccount()
+        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
+        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        return withContext(Dispatchers.IO) { org.json.JSONArray(requestText("GET", endpoint, token)) }
+    }
+
     internal suspend fun authorizedRequest(method: String, endpoint: String): JSONObject {
         require(method in setOf("GET", "POST", "PUT", "DELETE")) { "不支持的 Spotify 请求方法" }
         val state = refreshAccount()
-        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정に重新登录" }
+        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
         val token = store.read()?.accessToken ?: error("Spotify access token missing")
         return withContext(Dispatchers.IO) { requestJson(method, endpoint, token) }
     }
@@ -208,6 +215,11 @@ internal class SpotifyAuthentication(
     private fun getJson(endpoint: String, token: String): JSONObject = requestJson("GET", endpoint, token)
 
     private fun requestJson(method: String, endpoint: String, token: String): JSONObject {
+        val text = requestText(method, endpoint, token)
+        return if (text.isBlank()) JSONObject() else JSONObject(text)
+    }
+
+    private fun requestText(method: String, endpoint: String, token: String): String {
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 15_000
@@ -223,7 +235,7 @@ internal class SpotifyAuthentication(
                 val message = runCatching { JSONObject(text).optJSONObject("error")?.optString("message") ?: JSONObject(text).optString("error_description") }.getOrDefault(text)
                 throw IllegalStateException("HTTP $status: ${message.ifBlank { text }}")
             }
-            if (text.isBlank()) JSONObject() else JSONObject(text)
+            text
         } finally { connection.disconnect() }
     }
 
