@@ -11,9 +11,10 @@ import org.json.JSONArray
 /**
  * Spotify user library adapter.
  *
- * Saved tracks use /me/tracks. Playlists use /me/playlists and their item
- * endpoint; albums use /albums/{id}/tracks. All returned tracks remain
- * metadata-only because Spotify Web API does not expose a general audio URL.
+ * Saved tracks use /me/tracks; saved albums use /me/albums; followed and
+ * created playlists use /me/playlists. Album and playlist tracks are paged
+ * through their current item endpoints. Returned tracks remain metadata-only
+ * because Spotify Web API does not expose a general audio URL.
  */
 internal class SpotifyLibrary(
     private val authentication: SpotifyAuthentication,
