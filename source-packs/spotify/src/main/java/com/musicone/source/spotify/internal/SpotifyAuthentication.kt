@@ -44,8 +44,9 @@ internal class SpotifyAuthentication(
         val state = randomString(32)
         val challengeId = UUID.randomUUID().toString()
         pending[challengeId] = Pending(verifier, state)
+        store.savePending(challengeId, verifier, state)
         val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
-        val scopes = listOf("user-read-private", "user-read-email", "user-library-read", "playlist-read-private")
+        val scopes = listOf("user-read-private", "user-read-email", "user-library-read", "user-library-modify", "playlist-read-private")
         val url = Uri.parse("https://accounts.spotify.com/authorize").buildUpon()
             .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("response_type", "code")
@@ -68,15 +69,15 @@ internal class SpotifyAuthentication(
         challenge: SourceAuthChallenge,
         input: Map<String, String>
     ): SourceAuthResult = withContext(Dispatchers.IO) {
-        val state = pending[challenge.id] ?: return@withContext SourceAuthResult(
-            SourceAuthProgress.EXPIRED, "登录流程已过期，请重新开始"
-        )
+        val state = pending[challenge.id] ?: store.readPending(challenge.id)?.let { Pending(it.first, it.second) }
+            ?: return@withContext SourceAuthResult(SourceAuthProgress.EXPIRED, "登录流程已过期，请重新开始")
         val callback = input["callbackUrl"] ?: store.takeCallback().orEmpty()
         val code = input["code"] ?: Uri.parse(callback).getQueryParameter("code")
         val returnedState = input["state"] ?: Uri.parse(callback).getQueryParameter("state")
         val error = Uri.parse(callback).getQueryParameter("error")
         if (error != null) {
             pending.remove(challenge.id)
+            store.clearPending()
             return@withContext SourceAuthResult(SourceAuthProgress.EXPIRED, "Spotify 拒绝授权：$error")
         }
         if (code.isNullOrBlank() || returnedState.isNullOrBlank()) {
@@ -87,6 +88,7 @@ internal class SpotifyAuthentication(
         }
         if (returnedState != state.state) {
             pending.remove(challenge.id)
+            store.clearPending()
             return@withContext SourceAuthResult(SourceAuthProgress.EXPIRED, "OAuth state 校验失败，已拒绝此次登录")
         }
         try {
@@ -107,6 +109,7 @@ internal class SpotifyAuthentication(
             val displayName = profile.optString("display_name").ifBlank { accountId }
             store.write(SpotifyTokens(access, refresh, expires, tokenJson.optString("scope"), accountId, displayName, avatar))
             pending.remove(challenge.id)
+            store.clearPending()
             onLoginCompleted()
             SourceAuthResult(
                 SourceAuthProgress.SUCCEEDED,
@@ -114,6 +117,8 @@ internal class SpotifyAuthentication(
                 account = SourceAccount(accountId, displayName, avatar)
             )
         } catch (error: Exception) {
+            pending.remove(challenge.id)
+            store.clearPending()
             SourceAuthResult(SourceAuthProgress.EXPIRED, "Spotify 登录失败：${error.message ?: "网络或授权错误"}")
         }
     }
