@@ -66,6 +66,14 @@ internal class SpotifyTokenStore(context: Context) {
         }
     }
 
+    fun saveCallback(uri: String) { preferences.edit().putString("oauth_callback", uri).apply() }
+
+    @Synchronized fun takeCallback(): String? {
+        val value = preferences.getString("oauth_callback", null)
+        preferences.edit().remove("oauth_callback").apply()
+        return value
+    }
+
     @Synchronized fun clear() {
         preferences.edit().remove("tokens").commit()
         runCatching {
