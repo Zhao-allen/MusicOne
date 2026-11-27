@@ -159,27 +159,32 @@ internal class SpotifyAuthentication(
 
     internal suspend fun authorizedGet(endpoint: String): JSONObject {
         requireApiEndpoint(endpoint)
-        val state = refreshAccount()
-        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
-        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        val token = accessTokenForRequest()
         return withContext(Dispatchers.IO) { getJson(endpoint, token) }
     }
 
     internal suspend fun authorizedGetArray(endpoint: String): org.json.JSONArray {
         requireApiEndpoint(endpoint)
-        val state = refreshAccount()
-        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
-        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        val token = accessTokenForRequest()
         return withContext(Dispatchers.IO) { org.json.JSONArray(requestText("GET", endpoint, token)) }
     }
 
     internal suspend fun authorizedRequest(method: String, endpoint: String): JSONObject {
         requireApiEndpoint(endpoint)
         require(method in setOf("GET", "POST", "PUT", "DELETE")) { "不支持的 Spotify 请求方法" }
-        val state = refreshAccount()
-        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
-        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        val token = accessTokenForRequest()
         return withContext(Dispatchers.IO) { requestJson(method, endpoint, token) }
+    }
+
+    private suspend fun accessTokenForRequest(): String {
+        var tokens = store.read() ?: error("Spotify 账号尚未登录")
+        if (tokens.expiresAtMs <= System.currentTimeMillis() + 60_000L) {
+            val refreshed = refreshAccount()
+            check(refreshed.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 登录已过期，请重新登录" }
+            tokens = store.read() ?: error("Spotify access token missing")
+        }
+        check(tokens.expiresAtMs > System.currentTimeMillis()) { "Spotify access token 已过期" }
+        return tokens.accessToken
     }
 
     private fun requireApiEndpoint(endpoint: String) {
