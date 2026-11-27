@@ -23,6 +23,7 @@ class SpotifySourceEntry : SourceEntry {
 
     override val implementedCapabilities: Set<SourceCapability> = descriptor.capabilities
     private lateinit var auth: SpotifyAuthentication
+    private var registration: AutoCloseable? = null
 
     override val authentication: SourceAuthentication
         get() = auth
@@ -32,13 +33,17 @@ class SpotifySourceEntry : SourceEntry {
             store = SpotifyTokenStore(environment.context),
             onLoginCompleted = environment.host::exitSource
         )
-        environment.host.registerTask { close() }
+        registration = environment.host.registerTask { close() }
     }
 
     @Composable
     override fun Content(route: SourceRoute) = Unit
 
-    override fun close() = Unit
+    override fun close() {
+        val current = registration
+        registration = null
+        current?.close()
+    }
 }
 
 const val SPOTIFY_SOURCE_ID = "com.musicone.source.spotify"
