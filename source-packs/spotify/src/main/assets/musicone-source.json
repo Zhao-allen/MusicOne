@@ -7,7 +7,7 @@
   "entryClass": "com.musicone.source.spotify.SpotifySourceEntry",
   "apiVersion": 1,
   "minHostVersionCode": 6,
-  "minHostVersionName": "0.3.0",
+  "minHostVersionName": "0.4.0-鲜花饼",
   "minAndroid": 23,
   "kotlinVersion": "2.3.21",
   "composeVersion": "1.11.4",
