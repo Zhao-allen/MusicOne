@@ -1,0 +1,3 @@
+-keep class com.musicone.source.spotify.SpotifySourceEntry { *; }
+-dontwarn androidx.**
+-dontwarn kotlin.**
