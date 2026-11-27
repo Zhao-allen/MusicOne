@@ -10,7 +10,10 @@
 - 独立 OAuth 回调 URI：`com.musicone.spotify://callback`。
 - 登录后读取 Spotify 当前用户资料。
 - 接入 Spotify 搜索：歌曲、专辑、歌手、歌单；分页使用 API 返回的 next URL，并遵守 Development Mode 搜索每类最多 10 条的限制。
-- 当前声明 `ACCOUNT` 和 `SEARCH`；歌单资料库、收藏、歌词和播放尚未声明，避免宿主把空实现当成可用功能。
+- 接入 Spotify 用户资料库：我创建的歌单、我关注/保存的歌单、Liked Songs 收藏歌曲入口。
+- 接入收藏歌曲读取、单曲收藏状态查询，以及收藏/取消收藏（使用新版 `/me/library` 接口）。
+- 接入歌单详情和曲目分页；支持专辑详情与专辑曲目分页。
+- 当前声明 `ACCOUNT`、`SEARCH`、`PLAYLIST`、`ALBUM`；播放和歌词能力仍未声明。
 
 ## 本机配置
 
