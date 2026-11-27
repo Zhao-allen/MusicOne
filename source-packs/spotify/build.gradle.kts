@@ -47,5 +47,5 @@ tasks.register<Sync>("packageDebugSource") {
     dependsOn("assembleDebug")
     from(layout.buildDirectory.dir("outputs/apk/debug")) { include("*.apk") }
     into(layout.buildDirectory.dir("outputs/source-packs/debug"))
-    rename { "spotify-0.1.0.mscm" }
+    rename { "spotify-0.1.1.mscm" }
 }
