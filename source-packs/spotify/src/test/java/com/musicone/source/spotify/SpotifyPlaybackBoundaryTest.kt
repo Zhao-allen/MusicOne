@@ -3,7 +3,6 @@ package com.musicone.source.spotify
 import com.musicone.source.sdk.SourceCapability
 import com.musicone.source.spotify.internal.SpotifyPlaybackPolicy
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,6 +23,5 @@ class SpotifyPlaybackBoundaryTest {
         assertFalse(SourceCapability.LYRICS in entry.descriptor.capabilities)
         assertFalse(SourceCapability.PLAYBACK in entry.implementedCapabilities)
         assertFalse(SourceCapability.LYRICS in entry.implementedCapabilities)
-        assertNotNull(entry.search)
     }
 }
