@@ -8,7 +8,7 @@ import com.musicone.source.spotify.internal.SpotifySearch
 
 /**
  * Spotify 主音源入口。
- * 当前只声明真实实现的账号认证能力；没有伪造目录或音频播放能力。
+ * 当前声明账号认证与目录搜索；尚未声明歌单资料库、歌词或音频播放能力。
  */
 class SpotifySourceEntry : SourceEntry {
     override val descriptor = SourceDescriptor(
