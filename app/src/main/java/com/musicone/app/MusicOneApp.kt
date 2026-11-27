@@ -41,7 +41,7 @@ fun MusicOneApp(viewModel: MusicPlaybackRuntime = viewModel<MusicOneViewModel>()
 private fun MusicOneContent(viewModel: MusicPlaybackRuntime) {
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val spotifyCrossSourceResolver = remember(appContext) {
-        com.musicone.sourceintegration.SpotifyCrossSourceResolver(appContext)
+        com.musicone.sourceintegration.SpotifyCrossSourceResolver.get(appContext)
     }
     val searchPlaybackScope = androidx.compose.runtime.rememberCoroutineScope()
     PlaybackPresentationLifecycle(viewModel)
