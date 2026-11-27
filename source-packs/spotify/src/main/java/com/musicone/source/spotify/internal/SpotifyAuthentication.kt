@@ -48,7 +48,7 @@ internal class SpotifyAuthentication(
         pending[challengeId] = Pending(verifier, state)
         if (restored == null) store.savePending(challengeId, verifier, state)
         val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
-        val scopes = listOf("user-read-private", "user-library-read", "user-library-modify", "playlist-read-private", "playlist-read-collaborative")
+        val scopes = listOf("user-read-private", "user-library-read", "user-library-modify", "playlist-read-private", "playlist-read-collaborative", "user-follow-modify")
         val url = Uri.parse("https://accounts.spotify.com/authorize").buildUpon()
             .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("response_type", "code")
