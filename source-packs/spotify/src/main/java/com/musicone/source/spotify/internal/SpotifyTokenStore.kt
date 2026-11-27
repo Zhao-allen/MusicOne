@@ -67,7 +67,7 @@ internal class SpotifyTokenStore(context: Context) {
     }
 
     @Synchronized fun saveCallback(uri: String) {
-        preferences.edit().putString("oauth_callback_enc", encryptString(uri)).apply()
+        check(preferences.edit().putString("oauth_callback_enc", encryptString(uri)).commit())
     }
 
     @Synchronized fun takeCallback(): String? {
@@ -78,7 +78,7 @@ internal class SpotifyTokenStore(context: Context) {
 
     @Synchronized fun savePending(challengeId: String, verifier: String, state: String) {
         val json = JSONObject().put("id", challengeId).put("verifier", verifier).put("state", state).toString()
-        preferences.edit().putString("oauth_pending_enc", encryptString(json)).apply()
+        check(preferences.edit().putString("oauth_pending_enc", encryptString(json)).commit())
     }
 
     @Synchronized fun readPending(challengeId: String): Pair<String, String>? {
@@ -91,7 +91,7 @@ internal class SpotifyTokenStore(context: Context) {
     }
 
     @Synchronized fun clearPending() {
-        preferences.edit().remove("oauth_pending_enc").apply()
+        preferences.edit().remove("oauth_pending_enc").commit()
     }
 
     @Synchronized fun clear() {
