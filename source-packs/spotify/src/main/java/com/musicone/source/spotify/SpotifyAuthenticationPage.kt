@@ -118,7 +118,7 @@ internal class SpotifyAuthenticationPage(
             Text("Spotify", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(12.dp))
             if (account.status == SourceSessionStatus.AUTHENTICATED && account.account != null) {
-                Text("已登录：${account.account.displayName}", style = MaterialTheme.typography.titleMedium)
+                Text("已登录：${account.account?.displayName.orEmpty()}", style = MaterialTheme.typography.titleMedium)
                 Text("Spotify 账号已连接到 MusicOne。", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text(
