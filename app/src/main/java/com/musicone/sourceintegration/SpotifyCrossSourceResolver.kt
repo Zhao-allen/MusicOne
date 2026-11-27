@@ -6,7 +6,6 @@ import com.musicone.source.sdk.SourceCursorRequest
 import com.musicone.source.sdk.SourceSearchKind
 import com.musicone.source.sdk.SourceTrackDetails
 import kotlinx.coroutines.CancellationException
-import kotlin.math.max
 
 /**
  * Resolves Spotify catalog metadata to a playable track from another installed
@@ -52,7 +51,7 @@ internal class SpotifyCrossSourceResolver(context: Context) {
             val playback = instance.entry.mediaPlayback ?: continue
             try {
                 val access = playback.availability(listOf(details)).firstOrNull()
-                if (access?.playable == true) return details.toMusicTrack()
+                if (access?.playable == true) return details.copy(access = access).toMusicTrack()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
