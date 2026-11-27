@@ -70,7 +70,7 @@ jobs:
 
       - name: Verify package output
         run: |
-          test -s source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+          test -s source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.1.mscm
           ls -lh source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
 
       - name: Upload Spotify source pack
