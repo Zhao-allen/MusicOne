@@ -21,7 +21,7 @@ internal class SpotifyEntities(
             reference = SourceEntityRef(id, name, reference.kind),
             description = if (reference.kind == "artist") {
                 json.optJSONArray("genres")?.let { genres ->
-                    (0 until genres.length()).mapNotNull(genres::optString).joinToString(" · ")
+                    (0 until genres.length()).map { genres.optString(it) }.filter { it.isNotBlank() }.joinToString(" · ")
                 }.orEmpty()
             } else json.optString("album_type"),
             artwork = SourceArtwork(url = json.optJSONArray("images")?.optJSONObject(0)?.optString("url")),
