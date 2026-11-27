@@ -29,7 +29,7 @@ internal class SpotifyAuthentication(
             return SourceAccountState(SourceSessionStatus.EXPIRED, null, tokens.expiresAtMs)
         }
         return SourceAccountState(
-            if (tokens.expiresAtMs > System.currentTimeMillis()) SourceSessionStatus.AUTHENTICATED else SourceSessionStatus.EXPIRED,
+            if (tokens.expiresAtMs > System.currentTimeMillis() || !tokens.refreshToken.isNullOrBlank()) SourceSessionStatus.AUTHENTICATED else SourceSessionStatus.EXPIRED,
             tokens.accountId.takeIf { it.isNotBlank() }?.let {
                 SourceAccount(it, tokens.displayName.ifBlank { it }, tokens.avatarUrl)
             },
