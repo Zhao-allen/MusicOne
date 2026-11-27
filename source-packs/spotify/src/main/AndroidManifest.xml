@@ -1,17 +1,3 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <application android:label="Spotify音源" android:hasCode="true">
-        <activity
-            android:name=".SpotifyOAuthCallbackActivity"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:noHistory="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.musicone.spotify" android:host="callback" />
-            </intent-filter>
-        </activity>
-    </application>
 </manifest>
