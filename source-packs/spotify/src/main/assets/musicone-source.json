@@ -13,5 +13,5 @@
   "composeVersion": "1.11.4",
   "capabilities": [ "ACCOUNT", "SEARCH" ],
   "useCustomPages": false,
-  "requiresLogin": false
+  "requiresLogin": true
 }
