@@ -141,6 +141,12 @@ internal class SpotifyCrossSourceResolver(context: Context) {
     }
 
     companion object {
+        @Volatile private var shared: SpotifyCrossSourceResolver? = null
+
+        fun get(context: Context): SpotifyCrossSourceResolver = shared ?: synchronized(this) {
+            shared ?: SpotifyCrossSourceResolver(context.applicationContext).also { shared = it }
+        }
+
         private const val SPOTIFY_SOURCE_ID = "com.musicone.source.spotify"
         private const val TITLE_WEIGHT = 0.72
         private const val ARTIST_WEIGHT = 0.28
