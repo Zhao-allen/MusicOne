@@ -110,7 +110,8 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
                 description = item.optString("description"),
                 count = count,
                 artwork = SourceArtwork(url = firstImage(item.optJSONArray("images"))),
-                owned = item.optJSONObject("owner")?.optString("id") == authentication.cachedAccountId()
+                owned = item.optJSONObject("owner")?.optString("id") == authentication.cachedAccountId(),
+                payload = SourcePayload("spotify.collection", 1, kind)
             )
         }
     }
