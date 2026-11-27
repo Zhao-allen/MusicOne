@@ -34,6 +34,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.musicone.sourceintegration.SpotifyOAuthRedirectActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.musicone.spotify" android:host="callback" />
+            </intent-filter>
+        </activity>
         <service android:name="com.musicone.AiReplyService" android:exported="false"
             android:foregroundServiceType="dataSync" />
         <service
