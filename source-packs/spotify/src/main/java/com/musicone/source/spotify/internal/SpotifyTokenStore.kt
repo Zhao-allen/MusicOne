@@ -86,13 +86,18 @@ internal class SpotifyTokenStore(context: Context) {
         check(preferences.edit().putString("oauth_pending_enc", encryptString(json)).commit())
     }
 
-    @Synchronized fun readPending(challengeId: String): Pair<String, String>? {
+    @Synchronized fun readPending(): Triple<String, String, String>? {
         val packed = preferences.getString("oauth_pending_enc", null) ?: return null
         val json = runCatching { JSONObject(decryptString(packed)) }.getOrNull() ?: return null
-        if (json.optString("id") != challengeId) return null
+        val id = json.optString("id")
         val verifier = json.optString("verifier")
         val state = json.optString("state")
-        return if (verifier.isNotBlank() && state.isNotBlank()) verifier to state else null
+        return if (id.isNotBlank() && verifier.isNotBlank() && state.isNotBlank()) Triple(id, verifier, state) else null
+    }
+
+    @Synchronized fun readPending(challengeId: String): Pair<String, String>? {
+        val pending = readPending() ?: return null
+        return if (pending.first == challengeId) pending.second to pending.third else null
     }
 
     @Synchronized fun clearPending() {
