@@ -3,6 +3,7 @@ package com.musicone.source.spotify.internal
 import android.net.Uri
 import com.musicone.source.sdk.*
 import com.musicone.source.spotify.BuildConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -116,6 +117,8 @@ internal class SpotifyAuthentication(
                 "Spotify 登录成功：$displayName",
                 account = SourceAccount(accountId, displayName, avatar)
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Exception) {
             pending.remove(challenge.id)
             store.clearPending()
