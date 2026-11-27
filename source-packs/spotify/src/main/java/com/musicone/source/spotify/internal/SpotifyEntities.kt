@@ -3,7 +3,6 @@ package com.musicone.source.spotify.internal
 import android.net.Uri
 import com.musicone.source.sdk.*
 import com.musicone.source.spotify.SPOTIFY_SOURCE_ID
-import org.json.JSONArray
 
 /** Spotify artist/album metadata adapter. Artist top tracks were removed from the Web API in 2026. */
 internal class SpotifyEntities(
