@@ -2,13 +2,12 @@ package com.musicone.source.spotify
 
 import androidx.compose.runtime.Composable
 import com.musicone.source.sdk.*
+import com.musicone.source.spotify.internal.SpotifyAuthentication
+import com.musicone.source.spotify.internal.SpotifyTokenStore
 
 /**
  * Spotify 主音源入口。
- *
- * 本阶段只注册独立音源包骨架，不声明尚未实现的搜索、账号或播放能力。
- * 后续服务将按 MusicOne SDK 契约逐项接入；Spotify Web API 不提供可直接交给
- * MusicOne Media3 播放器的通用音频流地址，因此在播放后端完成授权验证前绝不声明 PLAYBACK。
+ * 当前只声明真实实现的账号认证能力；没有伪造目录或音频播放能力。
  */
 class SpotifySourceEntry : SourceEntry {
     override val descriptor = SourceDescriptor(
@@ -17,14 +16,24 @@ class SpotifySourceEntry : SourceEntry {
         kind = SourceKind.MAIN,
         versionCode = 1,
         versionName = "0.1.0",
-        capabilities = emptySet(),
+        capabilities = setOf(SourceCapability.ACCOUNT),
         useCustomPages = false,
-        requiresLogin = false
+        requiresLogin = true
     )
 
-    override val implementedCapabilities: Set<SourceCapability> = emptySet()
+    override val implementedCapabilities: Set<SourceCapability> = descriptor.capabilities
+    private lateinit var auth: SpotifyAuthentication
 
-    override fun initialize(environment: SourceEnvironment) = Unit
+    override val authentication: SourceAuthentication
+        get() = auth
+
+    override fun initialize(environment: SourceEnvironment) {
+        auth = SpotifyAuthentication(
+            store = SpotifyTokenStore(environment.context),
+            onLoginCompleted = environment.host::exitSource
+        )
+        environment.host.registerTask { close() }
+    }
 
     @Composable
     override fun Content(route: SourceRoute) = Unit
