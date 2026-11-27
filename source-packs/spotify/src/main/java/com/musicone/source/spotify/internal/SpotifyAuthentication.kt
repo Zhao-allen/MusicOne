@@ -146,6 +146,13 @@ internal class SpotifyAuthentication(
         SourceAccountState(SourceSessionStatus.AUTHENTICATED, SourceAccount(id, name, avatar), tokens.expiresAtMs)
     }
 
+    internal suspend fun authorizedGet(endpoint: String): JSONObject {
+        val state = refreshAccount()
+        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
+        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        return withContext(Dispatchers.IO) { getJson(endpoint, token) }
+    }
+
     override suspend fun logout() { store.clear(); pending.clear() }
 
     override fun exportSession(): SourceSessionSnapshot? {
