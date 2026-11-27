@@ -27,6 +27,7 @@ dependencies {
     if (findProject(":source-sdk") != null) compileOnly(project(":source-sdk"))
     else compileOnly(files(providers.gradleProperty("sourceSdk").get()))
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     compileOnly("androidx.compose.runtime:runtime:1.11.4")
     compileOnly("androidx.compose.ui:ui:1.11.4")
     compileOnly("androidx.compose.foundation:foundation:1.11.4")
