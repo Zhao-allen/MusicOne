@@ -6,6 +6,7 @@ import com.musicone.source.spotify.internal.SpotifyAuthentication
 import com.musicone.source.spotify.internal.SpotifyTokenStore
 import com.musicone.source.spotify.internal.SpotifySearch
 import com.musicone.source.spotify.internal.SpotifyLibrary
+import com.musicone.source.spotify.internal.SpotifyEntities
 
 /** Spotify 主音源入口：账号、搜索、歌单/专辑目录与收藏资料库。 */
 class SpotifySourceEntry : SourceEntry {
@@ -24,6 +25,7 @@ class SpotifySourceEntry : SourceEntry {
     private lateinit var auth: SpotifyAuthentication
     private lateinit var searchService: SpotifySearch
     private lateinit var libraryService: SpotifyLibrary
+    private lateinit var entitiesService: SpotifyEntities
     private var registration: AutoCloseable? = null
 
     override val authentication: SourceAuthentication
@@ -38,6 +40,9 @@ class SpotifySourceEntry : SourceEntry {
     override val favorites: SourceFavorites
         get() = libraryService
 
+    override val entities: SourceEntities
+        get() = entitiesService
+
     override fun initialize(environment: SourceEnvironment) {
         auth = SpotifyAuthentication(
             store = SpotifyTokenStore(environment.context),
@@ -45,6 +50,7 @@ class SpotifySourceEntry : SourceEntry {
         )
         searchService = SpotifySearch(auth)
         libraryService = SpotifyLibrary(auth, searchService)
+        entitiesService = SpotifyEntities(auth, libraryService)
         registration = environment.host.registerTask { close() }
     }
 
