@@ -1,0 +1,93 @@
+name: Build Spotify Source Pack
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/spotify-source
+    paths:
+      - 'source-packs/spotify/**'
+      - 'source-sdk/**'
+      - 'source-runtime/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/build-spotify-source-pack.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spotify-source-pack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build installable Spotify source pack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v7
+        with:
+          ref: feature/spotify-source
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '25.0.2+10'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+          dependency-graph: disabled
+          validate-wrappers: true
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Install Android build tools
+        run: |
+          sdkmanager --install \
+            "platforms;android-37.0" \
+            "build-tools;36.0.0"
+
+      - name: Build Spotify source pack
+        env:
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :source-packs:spotify:packageDebugSource \
+            --stacktrace \
+            --no-daemon \
+            "-PspotifyClientId=${SPOTIFY_CLIENT_ID}" \
+            "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
+
+      - name: Verify package output
+        run: |
+          test -s source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+          ls -lh source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+
+      - name: Upload Spotify source pack
+        uses: actions/upload-artifact@v7
+        with:
+          name: Spotify-Source-Pack-0.1.1
+          path: source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Spotify-Source-Pack-Build-Reports
+          path: |
+            source-packs/spotify/build/reports/**
+            source-packs/spotify/build/outputs/logs/**
+          if-no-files-found: warn
+          retention-days: 14
