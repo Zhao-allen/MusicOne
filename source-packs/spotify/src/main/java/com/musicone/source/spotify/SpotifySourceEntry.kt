@@ -5,6 +5,7 @@ import com.musicone.source.sdk.*
 import com.musicone.source.spotify.internal.SpotifyAuthentication
 import com.musicone.source.spotify.internal.SpotifyTokenStore
 import com.musicone.source.spotify.internal.SpotifySearch
+import com.musicone.source.spotify.internal.SpotifyLibrary
 
 /**
  * Spotify 主音源入口。
@@ -17,7 +18,7 @@ class SpotifySourceEntry : SourceEntry {
         kind = SourceKind.MAIN,
         versionCode = 1,
         versionName = "0.1.0",
-        capabilities = setOf(SourceCapability.ACCOUNT, SourceCapability.SEARCH),
+        capabilities = setOf(SourceCapability.ACCOUNT, SourceCapability.SEARCH, SourceCapability.PLAYLIST, SourceCapability.ALBUM),
         useCustomPages = false,
         requiresLogin = true
     )
@@ -25,6 +26,7 @@ class SpotifySourceEntry : SourceEntry {
     override val implementedCapabilities: Set<SourceCapability> = descriptor.capabilities
     private lateinit var auth: SpotifyAuthentication
     private lateinit var searchService: SpotifySearch
+    private lateinit var libraryService: SpotifyLibrary
     private var registration: AutoCloseable? = null
 
     override val authentication: SourceAuthentication
@@ -33,12 +35,19 @@ class SpotifySourceEntry : SourceEntry {
     override val search: SourceSearch
         get() = searchService
 
+    override val collections: SourceCollections
+        get() = libraryService
+
+    override val favorites: SourceFavorites
+        get() = libraryService
+
     override fun initialize(environment: SourceEnvironment) {
         auth = SpotifyAuthentication(
             store = SpotifyTokenStore(environment.context),
             onLoginCompleted = environment.host::exitSource
         )
         searchService = SpotifySearch(auth)
+        libraryService = SpotifyLibrary(auth, searchService)
         registration = environment.host.registerTask { close() }
     }
 
