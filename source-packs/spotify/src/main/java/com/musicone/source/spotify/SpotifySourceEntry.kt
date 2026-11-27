@@ -16,7 +16,7 @@ class SpotifySourceEntry : SourceEntry {
         kind = SourceKind.MAIN,
         versionCode = 1,
         versionName = "0.1.0",
-        capabilities = setOf(SourceCapability.ACCOUNT, SourceCapability.SEARCH, SourceCapability.PLAYLIST, SourceCapability.ALBUM),
+        capabilities = setOf(SourceCapability.ACCOUNT, SourceCapability.SEARCH, SourceCapability.PLAYLIST, SourceCapability.ALBUM, SourceCapability.ARTIST),
         useCustomPages = false,
         requiresLogin = true
     )
@@ -50,7 +50,7 @@ class SpotifySourceEntry : SourceEntry {
         )
         searchService = SpotifySearch(auth)
         libraryService = SpotifyLibrary(auth, searchService)
-        entitiesService = SpotifyEntities(auth, libraryService)
+        entitiesService = SpotifyEntities(auth, libraryService, searchService)
         registration = environment.host.registerTask { close() }
     }
 
