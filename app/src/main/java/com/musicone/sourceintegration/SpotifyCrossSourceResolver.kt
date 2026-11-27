@@ -1,7 +1,6 @@
 package com.musicone.sourceintegration
 
 import android.content.Context
-import com.musicone.MusicSource
 import com.musicone.MusicTrack
 import com.musicone.source.sdk.SourceCursorRequest
 import com.musicone.source.sdk.SourceSearchKind
