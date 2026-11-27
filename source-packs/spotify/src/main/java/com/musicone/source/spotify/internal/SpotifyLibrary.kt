@@ -3,6 +3,9 @@ package com.musicone.source.spotify.internal
 import android.net.Uri
 import com.musicone.source.sdk.*
 import com.musicone.source.spotify.SPOTIFY_SOURCE_ID
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import org.json.JSONArray
 
 /**
@@ -15,7 +18,9 @@ import org.json.JSONArray
 internal class SpotifyLibrary(
     private val authentication: SpotifyAuthentication,
     private val search: SpotifySearch
-) : SourceCollections, SourceFavorites {
+) : SourceCollections, SourceFavorites, SourceCollectionFavoritePolicy {
+
+    override val supportsCollections: Boolean get() = true
 
     override val librarySections = setOf(
         SourceLibrarySection.CREATED_COLLECTIONS,
@@ -39,7 +44,29 @@ internal class SpotifyLibrary(
             return SourcePage(listOf(collection), null)
         }
 
-        val endpoint = request.cursor ?: Uri.parse("$API/me/playlists").buildUpon()
+        if (section == SourceLibrarySection.SAVED_COLLECTIONS) {
+            val cursor = request.cursor.orEmpty()
+            val albumsCursor = cursor.takeIf { it.startsWith(SAVED_ALBUMS_CURSOR) }
+                ?.removePrefix(SAVED_ALBUMS_CURSOR)?.let(::decodeCursor)
+            if (cursor.isBlank() || albumsCursor != null) {
+                val endpoint = albumsCursor ?: Uri.parse("$API/me/albums").buildUpon()
+                    .appendQueryParameter("limit", request.limit.coerceIn(1, 50).toString())
+                    .build().toString()
+                val page = authentication.authorizedGet(endpoint)
+                val items = page.optJSONArray("items") ?: JSONArray()
+                val albums = (0 until items.length()).mapNotNull { index ->
+                    val album = items.optJSONObject(index)?.optJSONObject("album") ?: return@mapNotNull null
+                    search.parseCollections(JSONArray().put(album), "album").firstOrNull()
+                }
+                val nextAlbums = page.optString("next").takeIf { it.isNotBlank() && it != "null" }
+                if (nextAlbums != null) return SourcePage(albums, SAVED_ALBUMS_CURSOR + encodeCursor(nextAlbums))
+                return SourcePage(albums, PLAYLISTS_CURSOR)
+            }
+        }
+
+        val playlistCursor = request.cursor?.takeIf { it.startsWith(PLAYLISTS_CURSOR) }
+            ?.removePrefix(PLAYLISTS_CURSOR)?.let(::decodeCursor)
+        val endpoint = playlistCursor ?: Uri.parse("$API/me/playlists").buildUpon()
             .appendQueryParameter("limit", request.limit.coerceIn(1, 50).toString())
             .build().toString()
         val page = authentication.authorizedGet(endpoint)
@@ -51,10 +78,8 @@ internal class SpotifyLibrary(
                     else -> false
                 }
             }
-        return SourcePage(
-            playlists,
-            page.optString("next").takeIf { it.isNotBlank() && it != "null" }
-        )
+        val next = page.optString("next").takeIf { it.isNotBlank() && it != "null" }
+        return SourcePage(playlists, next?.let { if (section == SourceLibrarySection.SAVED_COLLECTIONS) PLAYLISTS_CURSOR + encodeCursor(it) else it })
     }
 
     override suspend fun detail(collection: SourceCollection): SourceCollection {
@@ -141,8 +166,18 @@ internal class SpotifyLibrary(
         authentication.authorizedRequest(if (favorite) "PUT" else "DELETE", endpoint)
     }
 
+    override fun canFavorite(collection: SourceCollection): Boolean =
+        collection.identity.sourceId == SPOTIFY_SOURCE_ID &&
+            collection.payload.encoded in setOf("album", "playlist") &&
+            !(collection.payload.encoded == "playlist" && collection.owned)
+
     override suspend fun setCollectionFavorite(collection: SourceCollection, favorite: Boolean) {
-        throw UnsupportedOperationException("Spotify 歌单收藏接口尚未接入")
+        require(canFavorite(collection)) { "不能收藏此 Spotify 歌单或其他音源的集合" }
+        val kind = collection.payload.encoded
+        val uri = "spotify:$kind:${collection.identity.remoteId}"
+        val endpoint = Uri.parse("$API/me/library").buildUpon()
+            .appendQueryParameter("uris", uri).build().toString()
+        authentication.authorizedRequest(if (favorite) "PUT" else "DELETE", endpoint)
     }
 
     private fun requireSpotifyTrack(track: SourceTrackDetails) {
@@ -157,5 +192,9 @@ internal class SpotifyLibrary(
         private const val COLLECTION_PAYLOAD = "spotify.collection"
         private const val SAVED_TRACKS_ID = "saved-tracks"
         private const val SAVED_TRACKS_KIND = "saved-tracks"
+        private const val SAVED_ALBUMS_CURSOR = "spotify:saved-albums:"
+        private const val PLAYLISTS_CURSOR = "spotify:playlists:"
+        private fun encodeCursor(value: String) = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+        private fun decodeCursor(value: String) = URLDecoder.decode(value, StandardCharsets.UTF_8.name())
     }
 }
