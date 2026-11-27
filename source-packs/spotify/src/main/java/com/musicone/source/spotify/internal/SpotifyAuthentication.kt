@@ -155,6 +155,14 @@ internal class SpotifyAuthentication(
         return withContext(Dispatchers.IO) { getJson(endpoint, token) }
     }
 
+    internal suspend fun authorizedRequest(method: String, endpoint: String): JSONObject {
+        require(method in setOf("GET", "POST", "PUT", "DELETE")) { "不支持的 Spotify 请求方法" }
+        val state = refreshAccount()
+        check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정に重新登录" }
+        val token = store.read()?.accessToken ?: error("Spotify access token missing")
+        return withContext(Dispatchers.IO) { requestJson(method, endpoint, token) }
+    }
+
     override suspend fun logout() { store.clear(); pending.clear() }
 
     override fun exportSession(): SourceSessionSnapshot? {
@@ -197,8 +205,11 @@ internal class SpotifyAuthentication(
         } finally { connection.disconnect() }
     }
 
-    private fun getJson(endpoint: String, token: String): JSONObject {
+    private fun getJson(endpoint: String, token: String): JSONObject = requestJson("GET", endpoint, token)
+
+    private fun requestJson(method: String, endpoint: String, token: String): JSONObject {
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+            requestMethod = method
             connectTimeout = 15_000
             readTimeout = 15_000
             setRequestProperty("Authorization", "Bearer $token")
@@ -208,8 +219,11 @@ internal class SpotifyAuthentication(
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-            if (status !in 200..299) throw IllegalStateException("HTTP $status: ${runCatching { JSONObject(text).optString("error", text) }.getOrDefault(text)}")
-            JSONObject(text)
+            if (status !in 200..299) {
+                val message = runCatching { JSONObject(text).optJSONObject("error")?.optString("message") ?: JSONObject(text).optString("error_description") }.getOrDefault(text)
+                throw IllegalStateException("HTTP $status: ${message.ifBlank { text }}")
+            }
+            if (text.isBlank()) JSONObject() else JSONObject(text)
         } finally { connection.disconnect() }
     }
 
