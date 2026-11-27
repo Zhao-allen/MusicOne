@@ -15,7 +15,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
+    defaultConfig {
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\\\"" + providers.gradleProperty("spotifyClientId").getOrElse("") + "\\\"")
+    }
     signingConfigs.getByName("debug") {
         enableV1Signing = true
         enableV2Signing = true
