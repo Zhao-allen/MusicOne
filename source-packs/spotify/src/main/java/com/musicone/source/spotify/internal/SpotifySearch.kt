@@ -3,9 +3,7 @@ package com.musicone.source.spotify.internal
 import android.net.Uri
 import com.musicone.source.sdk.*
 import com.musicone.source.spotify.SPOTIFY_SOURCE_ID
-import java.net.URLEncoder
 import org.json.JSONArray
-import org.json.JSONObject
 
 /** Spotify Web API search adapter. Uses the current 10-result maximum and next URLs. */
 internal class SpotifySearch(private val authentication: SpotifyAuthentication) : SourceSearch {
