@@ -5,6 +5,8 @@ import com.musicone.MusicTrack
 import com.musicone.source.sdk.SourceCursorRequest
 import com.musicone.source.sdk.SourceSearchKind
 import com.musicone.source.sdk.SourceTrackDetails
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -13,11 +15,43 @@ import kotlinx.coroutines.CancellationException
  */
 internal class SpotifyCrossSourceResolver(context: Context) {
     private val appContext = context.applicationContext
+    private val matchCache = LinkedHashMap<String, CachedMatch>(CACHE_SIZE, 0.75f, true)
+
+    suspend fun resolvePlayableAlternatives(tracks: List<MusicTrack>): List<MusicTrack> {
+        val resolved = ArrayList<MusicTrack>(tracks.size)
+        tracks.forEach { track ->
+            currentCoroutineContext().ensureActive()
+            if (track.source.id == SPOTIFY_SOURCE_ID) {
+                findPlayableAlternative(track)?.let(resolved::add)
+            } else if (track.playable) resolved += track
+        }
+        return resolved.distinctBy { it.source.id to it.id }
+    }
 
     suspend fun findPlayableAlternative(spotifyTrack: MusicTrack): MusicTrack? {
         require(spotifyTrack.source.id == SPOTIFY_SOURCE_ID) { "仅支持 Spotify 曲目匹配" }
         val packages = SourcePackageController.get(appContext)
         packages.awaitStartup()
+
+        cached(spotifyTrack.id)?.let { (sourceId, details) ->
+            val instance = packages.running(sourceId)
+            val playback = instance?.entry?.mediaPlayback
+            if (playback != null) {
+                try {
+                    val access = playback.availability(listOf(details)).firstOrNull()
+                    if (access?.playable == true) {
+                    synchronized(matchCache) {
+                        matchCache[spotifyTrack.id] = CachedMatch(instance.entry.descriptor.id, details, System.currentTimeMillis())
+                        while (matchCache.size > CACHE_SIZE) matchCache.entries.iterator().run { if (hasNext()) { next(); remove() } }
+                    }
+                    return details.copy(access = access).toMusicTrack()
+                }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) { }
+            }
+            synchronized(matchCache) { matchCache.remove(spotifyTrack.id) }
+        }
 
         val query = listOf(spotifyTrack.title, spotifyTrack.artists)
             .filter(String::isNotBlank).joinToString(" ")
@@ -61,6 +95,20 @@ internal class SpotifyCrossSourceResolver(context: Context) {
         return null
     }
 
+    private fun cached(key: String): Pair<String, SourceTrackDetails>? = synchronized(matchCache) {
+        val match = matchCache[key] ?: return@synchronized null
+        if (System.currentTimeMillis() - match.savedAtMs > CACHE_TTL_MS) {
+            matchCache.remove(key)
+            null
+        } else match.sourceId to match.details
+    }
+
+    private data class CachedMatch(
+        val sourceId: String,
+        val details: SourceTrackDetails,
+        val savedAtMs: Long,
+    )
+
     private fun matchScore(source: MusicTrack, candidate: SourceTrackDetails): Double {
         val titleA = normalize(source.title)
         val titleB = normalize(candidate.track.title)
@@ -99,5 +147,7 @@ internal class SpotifyCrossSourceResolver(context: Context) {
         private const val MIN_ARTIST_SCORE = 0.35
         private const val MIN_MATCH_SCORE = 0.82
         private const val MAX_AVAILABILITY_CHECKS = 3
+        private const val CACHE_SIZE = 300
+        private const val CACHE_TTL_MS = 24 * 60 * 60 * 1000L
     }
 }
