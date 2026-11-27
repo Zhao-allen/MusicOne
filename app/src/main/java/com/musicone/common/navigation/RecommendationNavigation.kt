@@ -88,7 +88,7 @@ internal fun RecommendationDestination(
 ) {
     val context = LocalContext.current
     val spotifyPlaybackResolver = remember(context) {
-        com.musicone.sourceintegration.SpotifyCrossSourceResolver(context)
+        com.musicone.sourceintegration.SpotifyCrossSourceResolver.get(context)
     }
     val spotifyPlaybackScope = rememberCoroutineScope()
     val favorites = LocalMusicFavorites.current
