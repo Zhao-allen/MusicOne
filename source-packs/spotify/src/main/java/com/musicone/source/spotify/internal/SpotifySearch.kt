@@ -25,7 +25,7 @@ internal class SpotifySearch(private val authentication: SpotifyAuthentication) 
         require(kind in kinds) { "Spotify 暂不支持此搜索类型" }
         val types = when (kind) {
             SourceSearchKind.TRACK -> "track"
-            SourceSearchKind.COLLECTION -> "album,playlist"
+            SourceSearchKind.COLLECTION -> "playlist"
             SourceSearchKind.ARTIST -> "artist"
             SourceSearchKind.ALBUM -> "album"
             else -> error("Unsupported search kind")
