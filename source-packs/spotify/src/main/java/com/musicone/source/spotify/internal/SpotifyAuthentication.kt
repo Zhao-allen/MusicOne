@@ -146,6 +146,8 @@ internal class SpotifyAuthentication(
         SourceAccountState(SourceSessionStatus.AUTHENTICATED, SourceAccount(id, name, avatar), tokens.expiresAtMs)
     }
 
+    internal fun cachedAccountId(): String = store.read()?.accountId.orEmpty()
+
     internal suspend fun authorizedGet(endpoint: String): JSONObject {
         val state = refreshAccount()
         check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
