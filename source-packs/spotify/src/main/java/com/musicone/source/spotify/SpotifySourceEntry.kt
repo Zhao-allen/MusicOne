@@ -7,10 +7,7 @@ import com.musicone.source.spotify.internal.SpotifyTokenStore
 import com.musicone.source.spotify.internal.SpotifySearch
 import com.musicone.source.spotify.internal.SpotifyLibrary
 
-/**
- * Spotify 主音源入口。
- * 当前声明账号认证与目录搜索；尚未声明歌单资料库、歌词或音频播放能力。
- */
+/** Spotify 主音源入口：账号、搜索、歌单/专辑目录与收藏资料库。 */
 class SpotifySourceEntry : SourceEntry {
     override val descriptor = SourceDescriptor(
         id = SPOTIFY_SOURCE_ID,
