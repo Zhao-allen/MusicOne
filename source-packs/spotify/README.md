@@ -1,29 +1,50 @@
 # MusicOne Spotify 主音源
 
-这是 MusicOne 内置音源包形式的 Spotify 接入工程，采用 `SourceKind.MAIN`，不修改宿主 UI，也不复用 Spotifeur 的登录会话。
+这是 MusicOne 的独立 `.mscm` 主音源包，使用 Spotify 官方 OAuth 2.0 Authorization Code with PKCE，不复用 Spotifeur 会话，也不修改宿主主程序 UI。
 
-## 当前阶段
+## 已实现
 
-- 已注册独立 Gradle 模块 `:source-packs:spotify`。
-- 已添加 `SpotifySourceEntry` 和 `musicone-source.json`。
-- 当前不声明搜索、账号、歌单、歌词或播放能力，避免空实现被宿主误认为可用。
-- 当前阶段尚未完成 OAuth、Spotify Web API 数据映射、歌词服务或音频播放适配。
+- 独立音源模块注册到 Gradle 和宿主音源包构建流程。
+- Spotify OAuth PKCE：随机 verifier、S256 challenge、state 校验、授权码兑换、刷新令牌。
+- 使用 Android Keystore AES-GCM 加密保存令牌，不在日志中输出令牌。
+- 独立 OAuth 回调 URI：`com.musicone.spotify://callback`。
+- 登录后读取 Spotify 当前用户资料。
+- 当前只声明 `ACCOUNT` 能力；搜索、歌单、收藏、歌词和播放尚未声明，避免宿主把空实现当成可用功能。
 
-## 接入原则
+## 本机配置
 
-1. Spotify 账号使用独立 OAuth PKCE 授权和独立令牌存储。
-2. Spotify Web API 仅用于其正式允许的账号资料、目录元数据和用户资料库能力。
-3. 不把 Spotify Web API 当作音频流接口；不伪造播放 URL。
-4. 不实现绕过 Spotify Free/Premium 权限、DRM 或访问控制的逻辑。
-5. 只有在获得可用且获授权的音频资源后，才向 MusicOne 声明 `PLAYBACK`。
+Spotify Client ID 不是 Client Secret，可以作为公开客户端标识配置；**不要把 Client Secret 放进 Android 包或提交到仓库**。
 
-## 构建
+在本机 Gradle 用户属性中配置（不要提交到 Git）：
 
-在仓库根目录执行：
+```properties
+spotifyClientId=你的Spotify_Client_ID
+```
+
+例如放在用户目录的 `~/.gradle/gradle.properties`。Windows 通常为 `%USERPROFILE%\.gradle\gradle.properties`。
+
+在 Spotify Developer Dashboard 的应用设置中添加完全一致的 Redirect URI：
+
+```text
+com.musicone.spotify://callback
+```
+
+然后构建：
 
 ```bash
 ./gradlew :source-packs:spotify:assembleDebug
 ./gradlew :source-packs:spotify:packageDebugSource
 ```
 
-产物位于 `source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm`。
+## Spotify 平台限制（重要）
+
+Spotify 当前 Development Mode 对应用所有者有有效 Premium 要求，并限制可授权测试用户。没有满足开发者账号资格时，OAuth/API 联调会被 Spotify 拒绝；这不是 MusicOne 代码能绕过的限制。
+
+Spotify Web API 是目录和用户数据 API，不提供可直接交给 MusicOne Media3 播放器的通用音频流 URL。因此本项目不会伪造播放地址，也不会实现绕过 Free/Premium、DRM 或访问控制的逻辑。只有获得 Spotify 明确授权且可由宿主播放器合法消费的音频资源后，才会声明 `PLAYBACK`。
+
+## 后续计划
+
+1. 完成搜索、歌手、专辑和歌单数据映射（以当前账号实际获准的 API endpoint 为准）。
+2. 接入用户资料库和收藏。
+3. 对歌词采用独立、合法授权的歌词来源；Spotify Web API 不提供歌词。
+4. 单独评估可授权的播放方案。
