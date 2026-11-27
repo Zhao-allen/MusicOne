@@ -65,7 +65,7 @@ internal class SpotifyLibrary(
         }
 
         val playlistCursor = request.cursor?.takeIf { it.startsWith(PLAYLISTS_CURSOR) }
-            ?.removePrefix(PLAYLISTS_CURSOR)?.let(::decodeCursor)
+            ?.removePrefix(PLAYLISTS_CURSOR)?.let(::decodeCursor)?.takeIf { it.isNotBlank() }
         val endpoint = playlistCursor ?: Uri.parse("$API/me/playlists").buildUpon()
             .appendQueryParameter("limit", request.limit.coerceIn(1, 50).toString())
             .build().toString()
