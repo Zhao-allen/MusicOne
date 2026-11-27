@@ -5,6 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import org.json.JSONObject
+import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -24,6 +25,7 @@ internal data class SpotifyTokens(
 internal class SpotifyTokenStore(context: Context) {
     private val preferences = context.getSharedPreferences("spotify-auth-v1", Context.MODE_PRIVATE)
     private val alias = "musicone.spotify.token.key"
+    private val callbackFile = File(context.filesDir, "oauth_callback.enc")
 
     @Synchronized fun read(): SpotifyTokens? = runCatching {
         val packed = preferences.getString("tokens", null) ?: return null
@@ -67,13 +69,16 @@ internal class SpotifyTokenStore(context: Context) {
     }
 
     @Synchronized fun saveCallback(uri: String) {
-        check(preferences.edit().putString("oauth_callback_enc", encryptString(uri)).commit())
+        callbackFile.parentFile?.mkdirs()
+        callbackFile.writeText(encryptString(uri), Charsets.UTF_8)
     }
 
     @Synchronized fun takeCallback(): String? {
-        val value = preferences.getString("oauth_callback_enc", null)
-        preferences.edit().remove("oauth_callback_enc").apply()
-        return value?.let(::decryptString)
+        if (!callbackFile.isFile) return null
+        val value = callbackFile.readText(Charsets.UTF_8)
+        val decrypted = decryptString(value)
+        callbackFile.delete()
+        return decrypted
     }
 
     @Synchronized fun savePending(challengeId: String, verifier: String, state: String) {
@@ -95,7 +100,8 @@ internal class SpotifyTokenStore(context: Context) {
     }
 
     @Synchronized fun clear() {
-        preferences.edit().remove("tokens").remove("oauth_callback_enc").remove("oauth_pending_enc").commit()
+        preferences.edit().remove("tokens").remove("oauth_pending_enc").commit()
+        callbackFile.delete()
         runCatching {
             val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
             store.deleteEntry(alias)
