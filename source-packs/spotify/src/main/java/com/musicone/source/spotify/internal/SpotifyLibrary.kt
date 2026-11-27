@@ -4,7 +4,6 @@ import android.net.Uri
 import com.musicone.source.sdk.*
 import com.musicone.source.spotify.SPOTIFY_SOURCE_ID
 import org.json.JSONArray
-import org.json.JSONObject
 
 /**
  * Spotify user library adapter.
