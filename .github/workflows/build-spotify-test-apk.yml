@@ -1,0 +1,89 @@
+name: Build Spotify Test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/spotify-source
+    paths:
+      - 'app/**'
+      - 'source-packs/**'
+      - 'source-sdk/**'
+      - 'source-runtime/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/build-spotify-test-apk.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spotify-test-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build installable test APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v7
+        with:
+          ref: feature/spotify-source
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '25.0.2+10'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+          dependency-graph: disabled
+          validate-wrappers: true
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Install Android build tools
+        run: |
+          sdkmanager --install \
+            "platforms;android-37.0" \
+            "build-tools;36.0.0" \
+            "ndk;27.1.12297006" \
+            "cmake;3.22.1"
+
+      - name: Build sourceDebug APK (includes source packs)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleSourceDebug \
+            --stacktrace \
+            --no-daemon \
+            "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8" \
+            "-Pkotlin.daemon.jvmargs=-Xmx3g"
+
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: MusicOne-Spotify-Test-APK
+          path: app/build/outputs/apk/sourceDebug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: MusicOne-Spotify-Build-Reports
+          path: |
+            **/build/reports/**
+            **/build/outputs/logs/**
+          if-no-files-found: warn
+          retention-days: 14
