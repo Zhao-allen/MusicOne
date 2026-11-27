@@ -131,7 +131,7 @@ internal class SpotifyLibrary(
         val uri = spotifyTrackUri(track)
         val endpoint = Uri.parse("$API/me/library/contains").buildUpon()
             .appendQueryParameter("uris", uri).build().toString()
-        return authentication.authorizedGet(endpoint).let { false }
+        return authentication.authorizedGetArray(endpoint).optBoolean(0, false)
     }
 
     override suspend fun setTrackFavorite(track: SourceTrackDetails, favorite: Boolean) {
