@@ -41,11 +41,12 @@ internal class SpotifyAuthentication(
         require(methodId == "spotify_pkce") { "不支持的 Spotify 登录方式" }
         val clientId = BuildConfig.SPOTIFY_CLIENT_ID
         require(clientId.isNotBlank()) { "尚未配置 Spotify Client ID，请在本机 Gradle 属性 spotifyClientId 中设置" }
-        val verifier = randomString(64)
-        val state = randomString(32)
-        val challengeId = UUID.randomUUID().toString()
+        val restored = store.readPending()
+        val verifier = restored?.second ?: randomString(64)
+        val state = restored?.third ?: randomString(32)
+        val challengeId = restored?.first ?: UUID.randomUUID().toString()
         pending[challengeId] = Pending(verifier, state)
-        store.savePending(challengeId, verifier, state)
+        if (restored == null) store.savePending(challengeId, verifier, state)
         val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
         val scopes = listOf("user-read-private", "user-read-email", "user-library-read", "user-library-modify", "playlist-read-private")
         val url = Uri.parse("https://accounts.spotify.com/authorize").buildUpon()
