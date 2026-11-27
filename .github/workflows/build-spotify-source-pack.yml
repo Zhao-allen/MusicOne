@@ -71,13 +71,13 @@ jobs:
       - name: Verify package output
         run: |
           test -s source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.1.mscm
-          ls -lh source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+          ls -lh source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.1.mscm
 
       - name: Upload Spotify source pack
         uses: actions/upload-artifact@v7
         with:
           name: Spotify-Source-Pack-0.1.1
-          path: source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.0.mscm
+          path: source-packs/spotify/build/outputs/source-packs/debug/spotify-0.1.1.mscm
           if-no-files-found: error
           retention-days: 14
 
