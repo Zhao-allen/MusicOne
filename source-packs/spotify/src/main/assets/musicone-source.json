@@ -11,7 +11,12 @@
   "minAndroid": 23,
   "kotlinVersion": "2.3.21",
   "composeVersion": "1.11.4",
-  "capabilities": [ "ACCOUNT", "SEARCH" ],
+  "capabilities": [
+    "ACCOUNT",
+    "SEARCH",
+    "PLAYLIST",
+    "ALBUM"
+  ],
   "useCustomPages": false,
   "requiresLogin": true
 }
