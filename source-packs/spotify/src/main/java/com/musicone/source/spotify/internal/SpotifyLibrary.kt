@@ -150,6 +150,16 @@ internal class SpotifyLibrary(
         return ids
     }
 
+    override suspend fun setTracksFavorite(tracks: List<SourceTrackDetails>, favorite: Boolean) {
+        if (tracks.isEmpty()) return
+        tracks.forEach(::requireSpotifyTrack)
+        tracks.map { spotifyTrackUri(it) }.distinct().chunked(40).forEach { uris ->
+            val endpoint = Uri.parse("$API/me/library").buildUpon()
+                .appendQueryParameter("uris", uris.joinToString(",")).build().toString()
+            authentication.authorizedRequest(if (favorite) "PUT" else "DELETE", endpoint)
+        }
+    }
+
     override suspend fun isTrackFavorite(track: SourceTrackDetails): Boolean {
         requireSpotifyTrack(track)
         val uri = spotifyTrackUri(track)
