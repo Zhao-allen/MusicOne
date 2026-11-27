@@ -194,7 +194,7 @@ listOf("debug", "sourceDebug", "debugRelease", "release").forEach { variant ->
     val taskSuffix = variant.replaceFirstChar(Char::uppercaseChar)
     val assetsDirectory = layout.buildDirectory.dir("generated/sourcePackAssets/$variant")
     val prepare = tasks.register<Sync>("prepare${taskSuffix}SourcePacks") {
-        listOf("qq", "kugou", "netease", "bilibili", "subsonic", "webdav").forEach { source ->
+        listOf("qq", "kugou", "netease", "bilibili", "subsonic", "webdav", "spotify").forEach { source ->
             dependsOn(":source-packs:$source:$packageTask")
             from(rootProject.layout.projectDirectory.dir("source-packs/$source/build/outputs/source-packs/$packageVariant")) {
                 include("*.mscm", "*.mscp")
