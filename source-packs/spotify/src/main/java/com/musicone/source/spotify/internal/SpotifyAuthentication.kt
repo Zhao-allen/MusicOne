@@ -158,6 +158,7 @@ internal class SpotifyAuthentication(
     internal fun cachedAccountId(): String = store.read()?.accountId.orEmpty()
 
     internal suspend fun authorizedGet(endpoint: String): JSONObject {
+        requireApiEndpoint(endpoint)
         val state = refreshAccount()
         check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
         val token = store.read()?.accessToken ?: error("Spotify access token missing")
@@ -165,6 +166,7 @@ internal class SpotifyAuthentication(
     }
 
     internal suspend fun authorizedGetArray(endpoint: String): org.json.JSONArray {
+        requireApiEndpoint(endpoint)
         val state = refreshAccount()
         check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
         val token = store.read()?.accessToken ?: error("Spotify access token missing")
@@ -172,11 +174,19 @@ internal class SpotifyAuthentication(
     }
 
     internal suspend fun authorizedRequest(method: String, endpoint: String): JSONObject {
+        requireApiEndpoint(endpoint)
         require(method in setOf("GET", "POST", "PUT", "DELETE")) { "不支持的 Spotify 请求方法" }
         val state = refreshAccount()
         check(state.status == SourceSessionStatus.AUTHENTICATED) { "Spotify 계정에 다시 로그인해야 합니다" }
         val token = store.read()?.accessToken ?: error("Spotify access token missing")
         return withContext(Dispatchers.IO) { requestJson(method, endpoint, token) }
+    }
+
+    private fun requireApiEndpoint(endpoint: String) {
+        val uri = Uri.parse(endpoint)
+        require(uri.scheme == "https" && uri.host == "api.spotify.com") {
+            "拒绝向 Spotify API 以外的地址发送账号令牌"
+        }
     }
 
     override suspend fun logout() { store.clear(); pending.clear() }
