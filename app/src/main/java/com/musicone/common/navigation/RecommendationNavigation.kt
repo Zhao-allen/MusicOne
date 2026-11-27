@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 internal class RecommendationNavigation(private val selectedPlaylist: MutableState<MusicPlaylist?>, val motion: PageMotion, val cards: PlaylistCardTransition) {
     val playlist: MusicPlaylist?
@@ -84,6 +86,10 @@ internal fun RecommendationDestination(
     onRestoreSourcePlaylistBackground: (MusicPlaylist) -> Unit,
 ) {
     val context = LocalContext.current
+    val spotifyPlaybackResolver = remember(context) {
+        com.musicone.sourceintegration.SpotifyCrossSourceResolver(context)
+    }
+    val spotifyPlaybackScope = rememberCoroutineScope()
     val favorites = LocalMusicFavorites.current
     val libraryPageState = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     val catalog: MusicCatalogViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
@@ -180,9 +186,49 @@ internal fun RecommendationDestination(
                     sort = sort.value,
                     onSort = sort.select,
                     onToggleSaved = { if (supportsCollections) onToggleSourceCollection(playlist) else viewModel.playlistLibrary.toggle(playlist) },
-                    onPlay = { pageActions.play(shuffle = false) },
-                    onShuffle = { pageActions.play(shuffle = true) },
-                    onTrackClick = { pageActions.play(track = it) },
+                    onPlay = {
+                        if (playlist.source.id == "com.musicone.source.spotify") {
+                            spotifyPlaybackScope.launch {
+                                try {
+                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(sorted.tracks)
+                                    if (matched.isNotEmpty()) viewModel.playPlaylist(sorted.copy(tracks = matched), shuffle = false)
+                                    else android.widget.Toast.makeText(context, "当前已加载的 Spotify 歌曲没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) {
+                                    android.widget.Toast.makeText(context, "Spotify 歌单匹配失败，请检查已安装音源", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else pageActions.play(shuffle = false)
+                    },
+                    onShuffle = {
+                        if (playlist.source.id == "com.musicone.source.spotify") {
+                            spotifyPlaybackScope.launch {
+                                try {
+                                    val matched = spotifyPlaybackResolver.resolvePlayableAlternatives(sorted.tracks)
+                                    if (matched.isNotEmpty()) viewModel.playPlaylist(sorted.copy(tracks = matched), shuffle = true)
+                                    else android.widget.Toast.makeText(context, "当前已加载的 Spotify 歌曲没有找到可播放版本", android.widget.Toast.LENGTH_LONG).show()
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) {
+                                    android.widget.Toast.makeText(context, "Spotify 歌单匹配失败，请检查已安装音源", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else pageActions.play(shuffle = true)
+                    },
+                    onTrackClick = { track ->
+                        if (track.source.id == "com.musicone.source.spotify") {
+                            spotifyPlaybackScope.launch {
+                                try {
+                                    val matched = spotifyPlaybackResolver.findPlayableAlternative(track)
+                                    if (matched != null) viewModel.playPlaylistTrack(
+                                        sorted.copy(tracks = listOf(matched)), matched,
+                                    ) else android.widget.Toast.makeText(context, "没有找到这首歌的可播放版本", android.widget.Toast.LENGTH_LONG).show()
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) {
+                                    android.widget.Toast.makeText(context, "歌曲匹配失败，请检查已安装音源", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else pageActions.play(track = track)
+                    },
                     onFavorite = if (deferFavoriteRemovals) favorites.toggleDeferredRemoval else favorites.toggle,
                     toolbarState = toolbarState,
                     floatingToolsState = floatingToolsState,
