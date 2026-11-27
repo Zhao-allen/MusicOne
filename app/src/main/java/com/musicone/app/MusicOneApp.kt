@@ -25,6 +25,8 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 @Composable
 fun MusicOneApp(viewModel: MusicPlaybackRuntime = viewModel<MusicOneViewModel>().playback) {
@@ -37,6 +39,11 @@ fun MusicOneApp(viewModel: MusicPlaybackRuntime = viewModel<MusicOneViewModel>()
 
 @Composable
 private fun MusicOneContent(viewModel: MusicPlaybackRuntime) {
+    val appContext = androidx.compose.ui.platform.LocalContext.current
+    val spotifyCrossSourceResolver = remember(appContext) {
+        com.musicone.sourceintegration.SpotifyCrossSourceResolver(appContext)
+    }
+    val searchPlaybackScope = androidx.compose.runtime.rememberCoroutineScope()
     PlaybackPresentationLifecycle(viewModel)
     val aiContext = androidx.compose.ui.platform.LocalContext.current
     val aiAssistant = remember(aiContext) { AiAssistantController.get(aiContext) }
@@ -312,7 +319,29 @@ private fun MusicOneContent(viewModel: MusicPlaybackRuntime) {
                     }
                     if (rootSearchEnabled) MainSourceSearchResults(
                         mainSearchState, mainSearchViewModel, mainSearchMotion, state, barMeasurements.detailInset,
-                        viewModel::playTrackNext,
+                        { track ->
+                            if (track.source.id == "com.musicone.source.spotify") {
+                                searchPlaybackScope.launch {
+                                    try {
+                                        val alternative = spotifyCrossSourceResolver.findPlayableAlternative(track)
+                                        if (alternative != null) viewModel.playTrackNext(alternative)
+                                        else android.widget.Toast.makeText(
+                                            appContext,
+                                            "其他已安装音源没有找到可确认播放的版本",
+                                            android.widget.Toast.LENGTH_LONG,
+                                        ).show()
+                                    } catch (cancelled: CancellationException) {
+                                        throw cancelled
+                                    } catch (_: Exception) {
+                                        android.widget.Toast.makeText(
+                                            appContext,
+                                            "跨音源匹配失败，请检查其他音源是否正常",
+                                            android.widget.Toast.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
+                            } else viewModel.playTrackNext(track)
+                        },
                         { playlist ->
                             recommendationNavigation.open(playlist)
                         },
