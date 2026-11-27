@@ -9,6 +9,7 @@
 - 使用 Android Keystore AES-GCM 加密保存令牌，不在日志中输出令牌。
 - 独立 OAuth 回调 URI：`com.musicone.spotify://callback`。
 - 登录后读取 Spotify 当前用户资料。
+- 接入 Spotify 搜索：歌曲、专辑、歌手、歌单；分页使用 API 返回的 next URL，并遵守 Development Mode 搜索每类最多 10 条的限制。
 - 当前只声明 `ACCOUNT` 能力；搜索、歌单、收藏、歌词和播放尚未声明，避免宿主把空实现当成可用功能。
 
 ## 本机配置
